@@ -1,0 +1,17 @@
+import path ;
+
+path-constant here : . ;
+
+requirements = <include>$(here)/include <include>$(sqlite-root) ;
+
+project : usage-requirements $(requirements) ;
+
+alias sources :
+	[ path.glob-tree $(here)/src : *.cpp ]
+	$(sqlite-root)/sqlite3.c
+	;
+
+lib quince-sqlite
+	: sources /quince//quince
+	: $(requirements) <threading>multi <toolset>msvc:<cxxflags>"/wd4800" <toolset>msvc:<link>static
+	;

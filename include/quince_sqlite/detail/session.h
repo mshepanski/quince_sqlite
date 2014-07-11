@@ -1,0 +1,73 @@
+#ifndef QUINCE_SQLITE__detail__session_h
+#define QUINCE_SQLITE__detail__session_h
+
+/*
+    Copyright 2014 Michael Shepanski
+
+    This file is part of the quince_sqlite library.
+
+    Quince_sqlite is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Quince_sqlite is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with quince_sqlite.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include <string>
+#include <vector>
+#include <boost/noncopyable.hpp>
+#include <boost/optional.hpp>
+#include <quince/detail/compiler_specific.h>
+#include <quince/detail/session.h>
+
+struct sqlite3;
+
+
+namespace quince_sqlite {
+
+class database;
+
+class session_impl : public quince::abstract_session_impl {
+public:
+    struct spec {
+        std::string _filename;
+        int _flags;
+        boost::optional<std::string> _vfs_module_name;
+    };
+
+    explicit session_impl(const database &, const session_impl::spec &);
+
+    virtual ~session_impl();
+
+    virtual bool                            unchecked_exec(const quince::sql &) override;
+    virtual void                            exec(const quince::sql &) override;
+    virtual quince::result_stream           exec_with_stream_output(const quince::sql &, uint32_t ignored) override;
+    virtual std::unique_ptr<quince::row>    exec_with_one_output(const quince::sql &) override;
+    virtual std::unique_ptr<quince::row>    next_output(const quince::result_stream &) override;
+
+    quince::serial last_inserted_serial() const;
+
+private:
+    QUINCE_NORETURN void throw_last_error(int last_result_code) const;
+
+    class statement;
+
+    std::unique_ptr<statement> make_stmt(const quince::sql &cmd);
+    void absorb_pending_results();
+
+    const database &_database;
+    sqlite3 * const _conn;
+    std::shared_ptr<statement> _asynchronous_stmt;
+    std::string _latest_sql;
+};
+
+}
+
+#endif
