@@ -83,7 +83,7 @@ database::database(
     bool mutex,
     bool share_cache,
     optional<string> vfs_module_name,
-    boost::optional<const mapping_customization &> customization_for_db,
+    const boost::optional<mapping_customization> &customization_for_db,
     const filename_map &attachable_database_filenames
 ) :
     quince::database(
@@ -118,12 +118,14 @@ database::get_default_enclosure() const {
 void
 database::make_enclosure_available(const optional<string> &enclosure_name) const {
     if (enclosure_name) {
-        optional<path> absolute;
-            (absolute = lookup(_attachable_database_absolute_filenames, *enclosure_name))
-        ||  (absolute = boost::filesystem::absolute(path(*enclosure_name)));
+        path absolute;
+        if (const optional<const path &> found = lookup(_attachable_database_absolute_filenames, *enclosure_name))
+            absolute = std::move(*found);
+        else
+            absolute = boost::filesystem::absolute(path(*enclosure_name));
 
         const unique_ptr<dialect_sql> cmd = make_dialect_sql();
-        cmd->write_attach_database(*absolute, *enclosure_name);
+        cmd->write_attach_database(absolute, *enclosure_name);
         get_session()->exec(*cmd);
     }
 }

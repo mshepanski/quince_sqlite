@@ -45,7 +45,7 @@ public:
         bool mutex = true,
         bool share_cache = true,
         boost::optional<std::string> vfs_module_name = boost::none,
-        boost::optional<const quince::mapping_customization &> customization_for_db = boost::none,
+        const boost::optional<quince::mapping_customization> &customization_for_db = boost::none,
         const filename_map &attachable_database_filenames = filename_map()
     );
 
