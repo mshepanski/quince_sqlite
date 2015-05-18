@@ -2,7 +2,10 @@ import path ;
 
 path-constant here : . ;
 
-requirements = <include>$(here)/include <include>$(sqlite-root) ;
+requirements =
+    <include>$(here)/include <include>$(sqlite-root)
+	<library>/boost//date_time
+    ;
 
 project : usage-requirements $(requirements) ;
 

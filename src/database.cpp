@@ -4,6 +4,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/filesystem/operations.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/utility/identity_type.hpp>
 #include <quince/exceptions.h>
 #include <quince/detail/compiler_specific.h>
@@ -20,6 +21,7 @@
 
 using namespace quince;
 using boost::optional;
+using boost::posix_time::ptime;
 using boost::filesystem::path;
 using std::dynamic_pointer_cast;
 using std::make_unique;
@@ -31,9 +33,42 @@ using std::unique_ptr;
 using std::vector;
 
 
+QUINCE_SUPPRESS_MSVC_DOMINANCE_WARNING
+
 namespace quince_sqlite {
 
 namespace {
+    class ptime_mapper : public abstract_mapper<ptime>, public direct_mapper<string>
+    {
+    public:
+        explicit ptime_mapper(const optional<string> &name, const mapper_factory &creator) :
+            abstract_mapper_base(name),
+            abstract_mapper<ptime>(name),
+            direct_mapper<string>(name, creator)
+        {}
+
+        virtual std::unique_ptr<cloneable>
+        clone_impl() const override {
+            return std::make_unique<ptime_mapper>(*this);
+        }
+
+        virtual void from_row(const row &src, ptime &dest) const override {
+            string text;
+            direct_mapper<string>::from_row(src, text);
+            dest = boost::posix_time::time_from_string(text);
+        }
+
+        virtual void to_row(const ptime &src, row &dest) const override {
+            const string text(boost::posix_time::to_simple_string(src));
+            direct_mapper<string>::to_row(text, dest);
+        }
+
+    protected:
+        virtual void build_match_tester(const query_base &qb, predicate &result) const override {
+            abstract_mapper<ptime>::build_match_tester(qb, result);
+        }
+    };
+
     struct customization_for_dbms : mapping_customization {
         customization_for_dbms() {
             customize<bool, numeric_cast_mapper<bool, direct_mapper<int64_t>>>();
@@ -50,6 +85,7 @@ namespace {
             customize<std::string, direct_mapper<std::string>>();
             customize<byte_vector, direct_mapper<byte_vector>>();
             customize<serial, serial_mapper>();
+            customize<ptime, ptime_mapper>();
         }
     };
 
@@ -195,3 +231,5 @@ database::make_dialect_sql() const {
 }
 
 }
+
+QUINCE_UNSUPPRESS_MSVC_WARNING
