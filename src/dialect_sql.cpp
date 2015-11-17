@@ -3,8 +3,8 @@
 //    (See accompanying file ../LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <quince/detail/compiler_specific.h>
 #include <quince/detail/binomen.h>
+#include <quince/detail/util.h>
 #include <quince/mappers/detail/persistent_column_mapper.h>
 #include <quince/exprn_mappers/detail/exprn_mapper.h>
 #include <quince/query.h>

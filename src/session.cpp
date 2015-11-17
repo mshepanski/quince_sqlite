@@ -8,11 +8,11 @@
 #include <string>
 #include <vector>
 #include <boost/optional.hpp>
-#include <quince/detail/column_type.h>
-#include <quince/detail/compiler_specific.h>
 #include <quince/exceptions.h>
+#include <quince/detail/column_type.h>
 #include <quince/detail/row.h>
 #include <quince/detail/sql.h>
+#include <quince/detail/util.h>
 #include <sqlite3.h>
 #include <quince_sqlite/database.h>
 #include <quince_sqlite/detail/dialect_sql.h>

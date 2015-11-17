@@ -9,6 +9,7 @@
 #include <quince/exceptions.h>
 #include <quince/detail/compiler_specific.h>
 #include <quince/detail/session.h>
+#include <quince/detail/util.h>
 #include <quince/mappers/direct_mapper.h>
 #include <quince/mappers/numeric_cast_mapper.h>
 #include <quince/mappers/reinterpret_cast_mapper.h>
