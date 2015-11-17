@@ -21,7 +21,6 @@
 using boost::optional;
 using namespace quince;
 using std::dynamic_pointer_cast;
-using std::make_unique;
 using std::shared_ptr;
 using std::string;
 using std::unique_ptr;
@@ -165,7 +164,7 @@ session_impl::unchecked_exec(const sql &cmd) {
 unique_ptr<row>
 session_impl::exec_with_one_output(const sql &cmd) {
     absorb_pending_results();
-    auto result = make_unique<row>(&_database);
+    auto result = quince::make_unique<row>(&_database);
     statement stmt(_conn, cmd);
     switch(int result_code = stmt.next(result.get())) {
         case SQLITE_DONE:   return nullptr;
@@ -200,7 +199,7 @@ session_impl::next_output(const result_stream &rs) {
         assert(_asynchronous_stmt);
         _asynchronous_stmt = stmt;
     }
-    auto result = make_unique<row>(&_database);
+    auto result = quince::make_unique<row>(&_database);
     const int result_code = stmt->next(result.get());
     if (result_code == SQLITE_ROW)  return result;
     _asynchronous_stmt.reset();
@@ -231,7 +230,7 @@ session_impl::throw_last_error(int last_result_code) const {
 std::unique_ptr<session_impl::statement>
 session_impl::make_stmt(const sql &cmd) {
     _latest_sql = cmd.get_text();
-    return make_unique<statement>(_conn, cmd);
+    return quince::make_unique<statement>(_conn, cmd);
 }
 
 void

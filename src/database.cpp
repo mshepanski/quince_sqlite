@@ -24,7 +24,6 @@ using boost::optional;
 using boost::posix_time::ptime;
 using boost::filesystem::path;
 using std::dynamic_pointer_cast;
-using std::make_unique;
 using std::map;
 using std::pair;
 using std::shared_ptr;
@@ -49,7 +48,7 @@ namespace {
 
         virtual std::unique_ptr<cloneable>
         clone_impl() const override {
-            return std::make_unique<ptime_mapper>(*this);
+            return quince::make_unique<ptime_mapper>(*this);
         }
 
         virtual void from_row(const row &src, ptime &dest) const override {
@@ -110,7 +109,7 @@ database::database(
 ) :
     quince::database(
         clone_or_null(customization_for_db),
-        std::make_unique<customization_for_dbms>()
+        quince::make_unique<customization_for_dbms>()
     ),
     _spec({
         filename,
@@ -154,7 +153,7 @@ database::make_enclosure_available(const optional<string> &enclosure_name) const
 
 new_session
 database::make_session() const {
-    return make_unique<session_impl>(*this, _spec);
+    return quince::make_unique<session_impl>(*this, _spec);
 }
 
 vector<string>
@@ -227,7 +226,7 @@ database::get_session_impl() const {
 
 unique_ptr<dialect_sql>
 database::make_dialect_sql() const {
-    return make_unique<dialect_sql>(*this);
+    return quince::make_unique<dialect_sql>(*this);
 }
 
 }
