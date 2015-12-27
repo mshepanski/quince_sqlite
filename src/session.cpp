@@ -151,19 +151,16 @@ session_impl::session_impl(const database &database, const session_impl::spec &s
 }
 
 session_impl::~session_impl() {
-    _asynchronous_stmt.reset();
     if (_conn)  sqlite3_close(_conn);
 }
 
 bool
 session_impl::unchecked_exec(const sql &cmd) {
-    assert(! _asynchronous_stmt);
     return make_stmt(cmd)->next() == SQLITE_DONE;
 }
 
 unique_ptr<row>
 session_impl::exec_with_one_output(const sql &cmd) {
-    absorb_pending_results();
     auto result = quince::make_unique<row>(&_database);
     statement stmt(_conn, cmd);
     switch(int result_code = stmt.next(result.get())) {
@@ -177,15 +174,12 @@ session_impl::exec_with_one_output(const sql &cmd) {
 
 result_stream
 session_impl::exec_with_stream_output(const sql &cmd, uint32_t) {
-    absorb_pending_results();
-    _asynchronous_stmt = make_stmt(cmd);
-    return _asynchronous_stmt;
+    return make_stmt(cmd);
 }
 
 void
 session_impl::exec(const sql &cmd) {
-    absorb_pending_results();
-    int result_code = make_stmt(cmd)->next();
+    const int result_code = make_stmt(cmd)->next();
     if (result_code != SQLITE_DONE)  throw_last_error(result_code);
 }
 
@@ -194,17 +188,14 @@ session_impl::next_output(const result_stream &rs) {
     assert(rs);
     shared_ptr<statement> stmt = dynamic_pointer_cast<statement>(rs);
     assert(stmt);
-    if (stmt != _asynchronous_stmt) {
-        absorb_pending_results();
-        assert(_asynchronous_stmt);
-        _asynchronous_stmt = stmt;
-    }
+
     auto result = quince::make_unique<row>(&_database);
-    const int result_code = stmt->next(result.get());
-    if (result_code == SQLITE_ROW)  return result;
-    _asynchronous_stmt.reset();
-    if (result_code == SQLITE_DONE)  return nullptr;
-    throw_last_error(result_code);
+
+    switch (const int result_code = stmt->next(result.get())) {
+    case SQLITE_ROW:    return result;
+    case SQLITE_DONE:   return nullptr;
+    default:            throw_last_error(result_code);
+    }
 }
 
 serial
@@ -231,16 +222,6 @@ std::unique_ptr<session_impl::statement>
 session_impl::make_stmt(const sql &cmd) {
     _latest_sql = cmd.get_text();
     return quince::make_unique<statement>(_conn, cmd);
-}
-
-void
-session_impl::absorb_pending_results() {
-    if (_asynchronous_stmt) {
-        int result_code;
-        while ((result_code = _asynchronous_stmt->next()) != SQLITE_DONE)
-            if (result_code != SQLITE_ROW)  throw_last_error(result_code);
-        _asynchronous_stmt.reset();
-    }
 }
 
 }

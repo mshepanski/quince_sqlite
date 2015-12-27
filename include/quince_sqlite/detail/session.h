@@ -46,11 +46,9 @@ private:
     class statement;
 
     std::unique_ptr<statement> make_stmt(const quince::sql &cmd);
-    void absorb_pending_results();
 
     const database &_database;
     sqlite3 * const _conn;
-    std::shared_ptr<statement> _asynchronous_stmt;
     std::string _latest_sql;
 };
 
